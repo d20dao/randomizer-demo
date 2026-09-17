@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D20DAO Randomizer Demo</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a64; --line: #deddd6;
+    --accent: #3b5bdb; --accent-ink: #ffffff; --ok: #2b8a3e; --warn: #b35c00; --bad: #c92a2a;
+    --die: #fffdf5; --die-line: #c9c4b0; --code: #f0efe9; --flash: #fff3bf;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9d9c95; --line: #34342f;
+      --accent: #748ffc; --accent-ink: #0d0d0c; --ok: #69db7c; --warn: #ffa94d; --bad: #ff8787;
+      --die: #2a2926; --die-line: #4a4841; --code: #2a2a27; --flash: #3b3520;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header, main, footer { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  h3 { font-size: 12px; margin: 0 0 4px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  a { color: var(--accent); }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+  code { background: var(--code); padding: 1px 4px; border-radius: 4px; }
+  button, select { font: inherit; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  select { background: var(--panel); color: var(--ink); border-color: var(--line); }
+  button.secondary { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  input, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 100%; }
+  textarea { min-height: 84px; resize: vertical; }
+  label { display: block; color: var(--muted); font-size: 12px; margin: 6px 0 2px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .muted { color: var(--muted); }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  .setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 13px; }
+  .kv > span:nth-child(odd) { color: var(--muted); }
+  .kv > span { overflow-wrap: anywhere; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+  .card { display: flex; flex-direction: column; gap: 8px; }
+  .card p { margin: 0; }
+  .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+  .inputs .wide { grid-column: 1 / -1; }
+  .status { font-size: 12px; color: var(--muted); min-height: 18px; overflow-wrap: anywhere; }
+  .latest { border-top: 1px dashed var(--line); padding-top: 8px; border-radius: 4px; transition: background-color 1.5s; overflow-wrap: anywhere; min-width: 0; }
+  .card { min-width: 0; }
+  .latest.flash { background: var(--flash); }
+  .meta { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .dice { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+  .die { min-width: 42px; height: 42px; padding: 0 6px; display: grid; place-items: center; border: 2px solid var(--die-line); background: var(--die); border-radius: 8px; font-weight: 700; font-size: 18px; }
+  .die.small { min-width: 30px; height: 30px; font-size: 13px; border-width: 1px; border-radius: 6px; }
+  .big { font-size: 26px; font-weight: 700; overflow-wrap: anywhere; }
+  .coin { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; border: 3px solid var(--die-line); background: var(--die); }
+  ol.items { margin: 4px 0; padding-left: 26px; }
+  ol.items li.picked { font-weight: 700; color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+  th { color: var(--muted); font-weight: 600; }
+  tr.flash td { background: var(--flash); }
+  .section-title { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 8px; gap: 8px; flex-wrap: wrap; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; }
+  .pill.mainnet { border-color: var(--warn); color: var(--warn); font-weight: 600; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 4px; }
+  .dot.live { background: var(--ok); }
+  footer { color: var(--muted); font-size: 12px; }
+  @media (max-width: 520px) { .inputs { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>D20DAO Randomizer Demo</h1>
+    <div class="muted">Every <code>@d20dao/vrf-sdk</code> randomness option, live from the contract's stored results</div>
+  </div>
+  <div class="row">
+    <label for="networkSelect" style="margin:0">Network</label>
+    <select id="networkSelect"></select>
+    <span id="networkPill"></span>
+    <span id="walletInfo" class="muted">Wallet not connected</span>
+    <button id="connectBtn">Connect wallet</button>
+  </div>
+</header>
+
+<main>
+  <div class="setup">
+    <section class="panel">
+      <h2>Consumer contract</h2>
+      <div class="kv" id="consumerInfo"><span>Status</span><span>loading...</span></div>
+      <label for="consumerInput">Use another D20Playground address for this session</label>
+      <div class="row">
+        <input id="consumerInput" class="mono" placeholder="0x..." style="flex:1; min-width: 200px">
+        <button id="consumerBtn" class="secondary">Use</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>D20DAO service</h2>
+      <div class="kv" id="serviceInfo"><span>Coordinator</span><span class="mono">loading...</span></div>
+    </section>
+  </div>
+
+  <div class="section-title">
+    <h2 style="margin:0">Randomness options <span class="muted" style="font-weight:400">(latest fulfilled result stored on-chain for each)</span></h2>
+    <div class="row">
+      <span class="muted" id="runAllStatus"></span>
+      <button id="runAllBtn" class="secondary" disabled>Request all options</button>
+    </div>
+  </div>
+  <div class="grid" id="cards"></div>
+
+  <div class="section-title">
+    <h2 style="margin:0">Recent results <span class="muted" style="font-weight:400">(last 20 fulfilled, all wallets)</span></h2>
+  </div>
+  <section class="panel">
+    <table>
+      <thead><tr><th>Request</th><th>Option</th><th>Result</th><th>Requester</th><th>Fulfilled</th></tr></thead>
+      <tbody id="recentBody"><tr><td colspan="5" class="muted">Loading...</td></tr></tbody>
+    </table>
+  </section>
+
+  <div class="section-title">
+    <h2 style="margin:0">My requests</h2>
+    <div class="row">
+      <span id="creditInfo" class="muted"></span>
+      <button id="withdrawCreditBtn" class="secondary" style="display:none">Withdraw refund credit</button>
+      <button id="historyBtn" class="secondary" disabled>Refresh</button>
+    </div>
+  </div>
+  <section class="panel">
+    <table>
+      <thead><tr><th>Request</th><th>Option</th><th>Status</th><th>Result</th><th></th></tr></thead>
+      <tbody id="historyBody"><tr><td colspan="5" class="muted">Connect a wallet to see your requests.</td></tr></tbody>
+    </table>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+
+<script type="module">
+import {
+  AbiCoder, BrowserProvider, Contract, Interface, JsonRpcProvider, formatUnits, getAddress, id, isAddress, keccak256,
+  mapRandomness, quoteRequestFee, coordinatorAbi, builtins,
+} from './vendor/d20-browser.js';
+
+// ------------------------------------------------------------------ helpers
+const params = new URLSearchParams(location.search);
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, props = {}, ...children) => {
+  const { dataset, ...rest } = props;
+  const node = Object.assign(document.createElement(tag), rest);
+  if (dataset) Object.assign(node.dataset, dataset);
+  for (const child of children) if (child != null && child !== '') node.append(child);
+  return node;
+};
+const link = (href, text) => el('a', { href, textContent: text, target: '_blank', rel: 'noopener' });
+const short = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+const usdc = (wei) => `${formatUnits(wei, 18)} USDC`;
+const abiCoder = AbiCoder.defaultAbiCoder();
+const lines = (text) => text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+const itemsHash = (items) => keccak256(abiCoder.encode(['string[]'], [items]));
+const label = (key) => id(`d20-playground:${key}`);
+const ago = (seconds) => {
+  const s = Math.max(0, Math.round(Date.now() / 1000 - seconds));
+  return s < 90 ? `${s}s ago` : s < 5400 ? `${Math.round(s / 60)}m ago` : s < 129600 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86400)}d ago`;
+};
+
+const KIND_LABELS = ['Raw word', 'd20', 'd12', 'd10', 'd8', 'd6', 'd4', 'dN', 'Dice roll', 'Coin flip', 'Number range', 'Choose one', 'Choose many', 'Shuffle'];
+const LIST_KINDS = new Set([11, 12, 13]);
+const JOB_STATUS = ['Unknown', 'Pending', 'Fulfilled', 'Refunded'];
+const BUFFER_BPS = 3000;
+const TRACK_MS = 2000;
+const LIVE_MS = Math.max(1000, Number(params.get('poll')) || 4000);
+
+// ------------------------------------------------------------------ configuration (networks.json from `npm run build`, deployments from `npm run deploy:*`)
+const deploymentsName = /^[\w.-]+\.json$/.test(params.get('deployments') || '') ? params.get('deployments') : 'deployments.json';
+const [NETWORKS, DEPLOYMENTS] = await Promise.all([
+  fetch('./networks.json', { cache: 'no-store' }).then((r) => r.json()),
+  fetch(`./${deploymentsName}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+]);
+const findNetwork = (value) => Object.values(NETWORKS).find((n) => n.key === value || String(n.chainId) === String(value));
+let storedNetwork = null;
+try { storedNetwork = localStorage.getItem('d20pg:network'); } catch { /* storage unavailable */ }
+// mainnet-demo.* opens on mainnet; elsewhere the first network with a recorded deployment, testnet first.
+const DEFAULT_NETWORK = location.hostname.startsWith('mainnet') || !DEPLOYMENTS[5042002] ? 'mainnet' : 'testnet';
+const NET = findNetwork(params.get('network')) || findNetwork(storedNetwork) || findNetwork(DEFAULT_NETWORK);
+const RPC_URL = params.get('rpc') || NET.rpcUrl;
+const COORDINATOR = NET.coordinator;
+const CHAIN_HEX = '0x' + NET.chainId.toString(16);
+const replayLink = (requestId) => link(`https://d20dao.org/explorer/request/${NET.chainId}/${COORDINATOR}/${requestId}`, 'D20DAO explorer');
+const txLink = (hash) => link(`${NET.explorer}/tx/${hash}`, `${hash.slice(0, 10)}...`);
+
+const readProvider = new JsonRpcProvider(RPC_URL, NET.chainId, { staticNetwork: true });
+const coordinatorRead = new Contract(COORDINATOR, coordinatorAbi, readProvider);
+const playgroundAbi = await fetch('./D20Playground.abi.json', { cache: 'no-store' }).then((r) => r.json());
+const errorFragments = new Map();
+for (const item of [...coordinatorAbi, { type: 'error', name: 'InvalidMapping', inputs: [] }]) if (item.type === 'error') errorFragments.set(item.name, item);
+for (const item of playgroundAbi) if (item.type === 'error') errorFragments.delete(item.name);
+const fullInterface = new Interface([...playgroundAbi, ...errorFragments.values()]);
+
+let consumerAddress = null;
+let consumerRead = null;
+let callbackGas = 150000n;
+let browserProvider = null;
+let account = null;
+
+function explainError(error) {
+  if (error?.code === 'ACTION_REJECTED' || error?.info?.error?.code === 4001 || error?.code === 4001) return 'Rejected in wallet.';
+  const data = error?.data ?? error?.info?.error?.data?.data ?? error?.info?.error?.data ?? error?.error?.data;
+  if (typeof data === 'string' && data.length >= 10) {
+    try {
+      const parsed = fullInterface.parseError(data);
+      const args = parsed.args.map((a) => (typeof a === 'bigint' && a > 10n ** 15n ? usdc(a) : String(a))).join(', ');
+      return `Reverted: ${parsed.name}(${args})`;
+    } catch { /* fall through */ }
+  }
+  if (error?.revert) return `Reverted: ${error.revert.name}(${error.revert.args.join(', ')})`;
+  return error?.shortMessage || error?.info?.error?.message || error?.message || String(error);
+}
+
+// ------------------------------------------------------------------ results
+/** Converts a D20Playground.Result tuple into plain JS values. */
+function plainResult(r) {
+  return {
+    requestId: BigInt(r.requestId),
+    requester: r.requester,
+    kind: Number(r.kind),
+    status: Number(r.status),
+    requestedAt: Number(r.requestedAt),
+    requestBlock: Number(r.requestBlock),
+    fulfilledAt: Number(r.fulfilledAt),
+    fulfilledBlock: Number(r.fulfilledBlock),
+    context: r.context,
+    word: r.word,
+    spec: { operation: Number(r.spec.operation), lower: BigInt(r.spec.lower), upper: BigInt(r.spec.upper), count: Number(r.spec.count), population: Number(r.spec.population) },
+    values: Array.from(r.mappedValues, BigInt),
+  };
+}
+
+// Item lists for choose/shuffle come from the ItemsCommitted event of the request's own block, checked against the stored hash.
+const itemsCache = new Map();
+async function itemsFor(result) {
+  if (!LIST_KINDS.has(result.kind)) return null;
+  const key = result.requestId.toString();
+  if (!itemsCache.has(key)) {
+    itemsCache.set(key, (async () => {
+      const event = fullInterface.getEvent('ItemsCommitted');
+      const logs = await readProvider.getLogs({
+        address: consumerAddress,
+        topics: [event.topicHash, '0x' + result.requestId.toString(16).padStart(64, '0')],
+        fromBlock: result.requestBlock, toBlock: result.requestBlock,
+      });
+      for (const log of logs) {
+        const items = [...fullInterface.parseLog(log).args.items];
+        if (itemsHash(items) === result.context) return items;
+      }
+      return null;
+    })().catch(() => { itemsCache.delete(key); return null; }));
+  }
+  return itemsCache.get(key);
+}
+
+function renderValues(kind, values, items) {
+  const box = el('div');
+  if (kind === 0) {
+    box.append(el('div', { className: 'mono', textContent: '0x' + values[0].toString(16).padStart(64, '0') }));
+  } else if (kind >= 1 && kind <= 8) {
+    const dice = el('div', { className: 'dice' });
+    for (const v of values) dice.append(el('div', { className: values.length > 12 ? 'die small' : 'die', textContent: String(v) }));
+    box.append(dice);
+    if (values.length > 1) box.append(el('div', { className: 'muted', textContent: `Sum ${values.reduce((a, b) => a + b, 0n)}` }));
+  } else if (kind === 9) {
+    box.append(el('div', { className: 'row' }, el('div', { className: 'coin', textContent: values[0] === 1n ? 'H' : 'T' }),
+      el('div', { className: 'big', textContent: values[0] === 1n ? 'Heads' : 'Tails' })));
+  } else if (kind === 10) {
+    box.append(el('div', { className: 'big', textContent: values[0].toString() }));
+  } else if (kind === 11 || kind === 12) {
+    const picked = values.map(Number);
+    box.append(el('div', { className: 'big', textContent: items ? picked.map((i) => items[i]).join(', ') : `index ${picked.join(', ')}` }));
+    if (items) {
+      const list = el('ol', { className: 'items', start: 0 });
+      items.forEach((item, i) => list.append(el('li', { className: picked.includes(i) ? 'picked' : '', textContent: item })));
+      box.append(list);
+    }
+  } else if (kind === 13) {
+    const list = el('ol', { className: 'items' });
+    for (const v of values) list.append(el('li', { textContent: items ? `${items[Number(v)]}  (index ${v})` : `index ${v}` }));
+    box.append(list);
+  }
+  return box;
+}
+
+function summarize(result, items) {
+  const { kind, values } = result;
+  if (kind === 0) return '0x' + values[0].toString(16).padStart(64, '0').slice(0, 16) + '...';
+  if (kind === 9) return values[0] === 1n ? 'Heads' : 'Tails';
+  if (LIST_KINDS.has(kind) && items) return values.map((v) => items[Number(v)]).join(', ');
+  if (values.length > 8) return `${values.slice(0, 8).join(', ')}, ... (${values.length})`;
+  return values.join(', ');
+}
+
+const requesterLabel = (addr) => (account && addr.toLowerCase() === account.toLowerCase() ? `${short(addr)} (you)` : short(addr));
+
+// ------------------------------------------------------------------ option cards
+const OPTIONS = [
+  { kind: 0, title: 'Raw word', fn: 'requestRaw', about: 'requestRandomness: one 256-bit word, no mapping.', inputs: [], spec: () => builtins.raw(), args: () => [label('raw')] },
+  ...[20, 12, 10, 8, 6, 4].map((sides, i) => ({
+    kind: 1 + i, title: `d${sides}`, fn: `rollD${sides}`, about: `D20VRFRequests.d${sides}: one value 1-${sides}.`,
+    inputs: [], spec: () => builtins[`d${sides}`](), args: () => [label(`d${sides}`)],
+  })),
+  { kind: 7, title: 'Custom die (dN)', fn: 'rollDN', about: 'D20VRFRequests.dN: one value 1-sides (sides >= 2).',
+    inputs: [{ name: 'sides', label: 'Sides', value: '100' }],
+    spec: (v) => builtins.dN(BigInt(v.sides)), args: (v) => [BigInt(v.sides), label('dN')] },
+  { kind: 8, title: 'Dice roll (count x dN)', fn: 'rollDice', about: 'D20VRFRequests.diceRoll: 1-128 dice, repeats allowed.',
+    inputs: [{ name: 'sides', label: 'Sides', value: '6' }, { name: 'count', label: 'Count', value: '4' }],
+    spec: (v) => builtins.diceRoll(BigInt(v.sides), Number(v.count)), args: (v) => [BigInt(v.sides), Number(v.count), label('dice')] },
+  { kind: 9, title: 'Coin flip', fn: 'flipCoin', about: 'D20VRFRequests.coinFlip: 0 = tails, 1 = heads.', inputs: [], spec: () => builtins.coinFlip(), args: () => [label('coin')] },
+  { kind: 10, title: 'Number range', fn: 'randomInRange', about: 'D20VRFRequests.numberRange: one value in [min, max], uint256 bounds.',
+    inputs: [{ name: 'min', label: 'Min', value: '1' }, { name: 'max', label: 'Max', value: '1000000' }],
+    spec: (v) => builtins.numberRange(BigInt(v.min), BigInt(v.max)), args: (v) => [BigInt(v.min), BigInt(v.max), label('range')] },
+  { kind: 11, title: 'Choose one', fn: 'chooseOne', about: 'D20VRFRequests.chooseOne: one index; the list is committed on-chain first.',
+    inputs: [{ name: 'items', label: 'Items (one per line, 1-256)', value: 'Rock\nPaper\nScissors', type: 'textarea' }],
+    spec: (v) => builtins.chooseOne(lines(v.items).length), args: (v) => [lines(v.items)] },
+  { kind: 12, title: 'Choose many', fn: 'chooseMany', about: 'D20VRFRequests.chooseMany: distinct indices without replacement.',
+    inputs: [{ name: 'items', label: 'Items (one per line, 1-256)', value: 'Alice\nBob\nCarol\nDave\nEve\nFrank', type: 'textarea' }, { name: 'count', label: 'How many', value: '3' }],
+    spec: (v) => builtins.chooseMany(lines(v.items).length, Number(v.count)), args: (v) => [lines(v.items), Number(v.count)] },
+  { kind: 13, title: 'Shuffle', fn: 'shuffle', about: 'D20VRFRequests.shuffle: a full permutation of the list.',
+    inputs: [{ name: 'items', label: 'Items (one per line, 1-256)', value: 'A♠\nK♠\nQ♠\nJ♠\n10♠\n9♠\n8♠\n7♠', type: 'textarea' }],
+    spec: (v) => builtins.shuffle(lines(v.items).length), args: (v) => [lines(v.items)] },
+];
+
+const trackers = new Map(); // requestId -> update(request, latestBlock)
+const cards = OPTIONS.map((option) => {
+  const getters = {};
+  const card = el('section', { className: 'panel card', dataset: { kind: option.kind } });
+  card.append(el('h2', { textContent: option.title }), el('p', { className: 'muted', textContent: option.about }));
+  if (option.inputs.length) {
+    const grid = el('div', { className: 'inputs' });
+    for (const input of option.inputs) {
+      const field = input.type === 'textarea' ? el('textarea', { value: input.value, className: 'mono' }) : el('input', { value: input.value, className: 'mono' });
+      getters[input.name] = () => field.value.trim();
+      grid.append(el('div', { className: input.type === 'textarea' || option.inputs.length === 1 ? 'wide' : '' }, el('label', { textContent: input.label }), field));
+    }
+    card.append(grid);
+  }
+  const button = el('button', { textContent: 'Request', disabled: true });
+  const status = el('div', { className: 'status' });
+  const latest = el('div', { className: 'latest' }, el('h3', { textContent: 'Latest on-chain result' }), el('div', { className: 'muted', textContent: 'Loading...' }));
+  card.append(el('div', { className: 'row' }, button), status, latest);
+  const setStatus = (...parts) => status.replaceChildren(...parts);
+
+  async function run({ skipConfirm = false } = {}) {
+    let args;
+    try {
+      const values = Object.fromEntries(Object.entries(getters).map(([k, get]) => [k, get()]));
+      option.spec(values); // SDK validation, throws "Invalid mapping parameters"
+      args = option.args(values);
+    } catch (error) {
+      setStatus(el('span', { className: 'bad', textContent: `Invalid input: ${error.message}` }));
+      return;
+    }
+    button.disabled = true;
+    try {
+      await ensureChain();
+      setStatus('Quoting fee...');
+      const quote = await quoteRequestFee(readProvider, COORDINATOR, callbackGas, { bufferBps: BUFFER_BPS });
+      if (NET.isMainnet && !skipConfirm && !confirm(`${NET.name}: this request spends real USDC (fee ${usdc(quote.fee)}, sending ${usdc(quote.value)} with the change returned, plus gas). Continue?`)) {
+        setStatus('Cancelled.');
+        return;
+      }
+      setStatus(`Fee ${usdc(quote.fee)} at ${formatUnits(quote.baseFee, 'gwei')} gwei; sending ${usdc(quote.value)}. Confirm in wallet...`);
+      const consumer = new Contract(consumerAddress, fullInterface, await browserProvider.getSigner());
+      const tx = await consumer[option.fn](...args, { value: quote.value });
+      setStatus('Transaction ', txLink(tx.hash), ' sent, waiting for inclusion...');
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) throw new Error('Transaction failed');
+      const requestId = receipt.logs.filter((l) => l.address.toLowerCase() === consumerAddress.toLowerCase())
+        .map((l) => fullInterface.parseLog(l)).find((p) => p?.name === 'JobRequested')?.args.requestId;
+      if (requestId == null) throw new Error('JobRequested event not found in the receipt');
+      const startedAt = Date.now();
+      setStatus(`Request #${requestId} created in block ${receipt.blockNumber} (`, txLink(tx.hash), '). Waiting for the keeper...');
+      track(requestId.toString(), {
+        pending: (request, latestBlock) => {
+          const target = request.targetBlock > 0n ? `target block ${request.targetBlock}` : 'epoch packet not published yet';
+          setStatus(`Your request #${requestId}: waiting ${Math.round((Date.now() - startedAt) / 1000)} s, ${target}, deadline in ${Math.max(0, Number(request.deadline) - latestBlock.timestamp)} s.`);
+        },
+        fulfilled: async () => {
+          const result = plainResult(await consumerRead.getResult(requestId));
+          const items = await itemsFor(result);
+          setStatus(el('span', { className: 'ok', textContent: `Your request #${requestId} fulfilled after ${Math.round((Date.now() - startedAt) / 1000)} s: ${result.values.length ? summarize(result, items) : '(callback not stored yet, see My requests)'} ` }), replayLink(requestId));
+          refreshLive(true);
+        },
+        expired: () => {
+          const refund = el('button', { className: 'secondary', textContent: 'Refund fee' });
+          refund.onclick = () => refundRequest(requestId.toString(), refund, setStatus);
+          setStatus(el('span', { className: 'warn', textContent: `Your request #${requestId} passed its deadline without a result. ` }), refund);
+        },
+        refunded: () => setStatus(el('span', { className: 'warn', textContent: `Your request #${requestId} was refunded.` })),
+        error: (error) => setStatus(el('span', { className: 'bad', textContent: `Tracking error: ${explainError(error)}` })),
+      });
+    } catch (error) {
+      setStatus(el('span', { className: 'bad', textContent: explainError(error) }));
+    } finally {
+      button.disabled = !canSend();
+    }
+  }
+  button.onclick = () => run();
+  return { option, card, button, latest, run };
+});
+$('#cards').append(...cards.map((c) => c.card));
+
+// ------------------------------------------------------------------ live view of stored results
+const shownLatest = new Array(14).fill(null); // requestId shown per card
+let shownRecentTop = null;
+let lastFulfilledCount = null;
+let lastRequestCount = null;
+let liveBusy = false;
+
+async function renderLatestCard(card, result, isNew) {
+  const box = card.latest;
+  if (result.requestId === 0n) {
+    box.replaceChildren(el('h3', { textContent: 'Latest on-chain result' }), el('div', { className: 'muted', textContent: 'No fulfilled result yet.' }));
+    return;
+  }
+  const items = await itemsFor(result);
+  const sdkValues = mapRandomness(result.word, result.spec);
+  const sdkOk = sdkValues.join(',') === result.values.join(',');
+  const listOk = !LIST_KINDS.has(result.kind) || items !== null;
+  box.replaceChildren(
+    el('h3', { textContent: 'Latest on-chain result' }),
+    renderValues(result.kind, result.values, items),
+    el('div', { className: 'meta' }, `#${result.requestId} by `, el('span', { className: 'mono', textContent: requesterLabel(result.requester) }),
+      ` - block ${result.fulfilledBlock}, `, el('span', { className: 'ago', dataset: { ts: result.fulfilledAt }, textContent: ago(result.fulfilledAt) }), ' - ', replayLink(result.requestId)),
+    el('div', { className: `meta ${sdkOk ? 'ok' : 'bad'}`, textContent: sdkOk ? 'Stored word + spec re-mapped with SDK mapRandomness: match.' : 'SDK mapRandomness DIFFERS from stored values.' }),
+    listOk ? '' : el('div', { className: 'meta warn', textContent: 'Committed item list not found in logs; showing indices.' }),
+  );
+  if (isNew) { box.classList.add('flash'); setTimeout(() => box.classList.remove('flash'), 2500); }
+}
+
+async function renderRecent(results, highlightNew) {
+  const body = $('#recentBody');
+  if (!results.length) {
+    body.replaceChildren(el('tr', {}, el('td', { colSpan: 5, className: 'muted', textContent: 'No fulfilled results yet.' })));
+    return;
+  }
+  const previousTop = shownRecentTop;
+  const rows = await Promise.all(results.map(async (result) => {
+    const items = await itemsFor(result);
+    const row = el('tr', {},
+      el('td', {}, `#${result.requestId} `, replayLink(result.requestId)),
+      el('td', { textContent: KIND_LABELS[result.kind] }),
+      el('td', { className: 'mono', textContent: summarize(result, items) }),
+      el('td', { className: 'mono', textContent: requesterLabel(result.requester) }),
+      el('td', {}, `block ${result.fulfilledBlock}, `, el('span', { className: 'ago', dataset: { ts: result.fulfilledAt }, textContent: ago(result.fulfilledAt) })));
+    if (highlightNew && previousTop !== null && result.requestId > previousTop) { row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 2500); }
+    return row;
+  }));
+  shownRecentTop = results[0].requestId;
+  body.replaceChildren(...rows);
+}
+
+async function refreshLive(force = false) {
+  if (!consumerRead || liveBusy) return;
+  liveBusy = true;
+  try {
+    const [fulfilledCount, requestCount] = (await Promise.all([consumerRead.fulfilledCount(), consumerRead.requestCount()])).map(BigInt);
+    const changed = force || fulfilledCount !== lastFulfilledCount;
+    if (changed) {
+      const [latest, recent] = await Promise.all([consumerRead.latestResults(), consumerRead.recentResults()]);
+      const first = lastFulfilledCount === null;
+      await Promise.all(latest.map(plainResult).map(async (result, kind) => {
+        if (!first && shownLatest[kind] === result.requestId && !force) return;
+        const isNew = !first && shownLatest[kind] !== result.requestId;
+        shownLatest[kind] = result.requestId;
+        await renderLatestCard(cards[kind], result, isNew);
+      }));
+      await renderRecent(recent.map(plainResult), !first);
+    }
+    if (changed || requestCount !== lastRequestCount) refreshHistory();
+    lastFulfilledCount = fulfilledCount;
+    lastRequestCount = requestCount;
+    setLiveInfo(fulfilledCount, requestCount, null);
+  } catch (error) {
+    setLiveInfo(lastFulfilledCount, lastRequestCount, error);
+  } finally {
+    liveBusy = false;
+  }
+  for (const node of document.querySelectorAll('.ago')) node.textContent = ago(Number(node.dataset.ts));
+}
+
+let consumerSource = '';
+function setLiveInfo(fulfilledCount, requestCount, error) {
+  const info = $('#consumerInfo');
+  if (!consumerAddress) return;
+  info.replaceChildren(
+    el('span', { textContent: 'Address' }), el('span', {}, link(`${NET.explorer}/address/${consumerAddress}`, consumerAddress)),
+    el('span', { textContent: 'Source' }), el('span', { textContent: consumerSource }),
+    el('span', { textContent: 'Requests' }), el('span', { textContent: `${requestCount ?? '?'} made, ${fulfilledCount ?? '?'} fulfilled` }),
+    el('span', { textContent: 'Live view' }), error
+      ? el('span', { className: 'bad', textContent: `read failed (${explainError(error)}), retrying` })
+      : el('span', {}, el('span', { className: 'dot live' }), `reading the contract every ${LIVE_MS / 1000}s, updated ${new Date().toLocaleTimeString()}`),
+  );
+}
+
+// ------------------------------------------------------------------ tracking the tab's own requests
+async function trackTick() {
+  if (!trackers.size) return;
+  let latestBlock;
+  try { latestBlock = await readProvider.getBlock('latest'); } catch { return; }
+  await Promise.all([...trackers.entries()].map(async ([requestId, handlers]) => {
+    try {
+      const request = await coordinatorRead.getRequest(requestId);
+      if (request.fulfilled) {
+        // Wait until the callback stored the word (or the coordinator reports a failed delivery).
+        const job = await consumerRead.getResult(requestId);
+        if (Number(job.status) === 2 || !request.delivered) { trackers.delete(requestId); await handlers.fulfilled(); }
+      } else if (request.refunded) { trackers.delete(requestId); handlers.refunded(); refreshHistory(); }
+      else if (latestBlock.timestamp > Number(request.deadline)) { trackers.delete(requestId); handlers.expired(); refreshHistory(); }
+      else handlers.pending(request, latestBlock);
+    } catch (error) { handlers.error(error); }
+  }));
+}
+function track(requestId, handlers) { trackers.set(requestId, handlers); trackTick(); }
+setInterval(trackTick, TRACK_MS);
+
+async function refundRequest(requestId, button, setStatus) {
+  button.disabled = true;
+  try {
+    await ensureChain();
+    const [request, latestBlock] = await Promise.all([coordinatorRead.getRequest(requestId), readProvider.getBlock('latest')]);
+    if (request.fulfilled || request.refunded || latestBlock.timestamp <= Number(request.deadline)) {
+      throw new Error(`Refund not available: fulfilled=${request.fulfilled}, refunded=${request.refunded}, deadline ${request.deadline}, chain time ${latestBlock.timestamp}.`);
+    }
+    const coordinator = new Contract(COORDINATOR, coordinatorAbi, await browserProvider.getSigner());
+    // refundRequest needs ~242k gas left for the transfer and the 100k onRefund hook; estimation can undershoot.
+    const tx = await coordinator.refundRequest(requestId, { gasLimit: 500_000n });
+    setStatus?.('Refund transaction ', txLink(tx.hash), ' sent...');
+    await tx.wait();
+    setStatus?.(el('span', { className: 'warn', textContent: `Request #${requestId} refunded.` }));
+  } catch (error) {
+    button.disabled = false;
+    (setStatus ?? alert)(explainError(error));
+  }
+  refreshHistory();
+}
+
+async function retryCallback(requestId, button) {
+  button.disabled = true;
+  try {
+    await ensureChain();
+    const coordinator = new Contract(COORDINATOR, coordinatorAbi, await browserProvider.getSigner());
+    // Same-word redelivery; the coordinator needs gasLimit + gasLimit/63 + 140k left at delivery.
+    await (await coordinator.retryCallback(requestId, 200000, { gasLimit: 600_000n })).wait();
+  } catch (error) {
+    button.disabled = false;
+    alert(explainError(error));
+  }
+  refreshLive(true);
+}
+
+// ------------------------------------------------------------------ my requests
+let historyBusy = false;
+async function refreshHistory() {
+  if (!account || !consumerRead || historyBusy) return;
+  historyBusy = true;
+  const body = $('#historyBody');
+  try {
+    const [ids, credit, latestBlock] = await Promise.all([consumerRead.jobIdsOf(account), coordinatorRead.refundCredits(account), readProvider.getBlock('latest')]);
+    $('#creditInfo').textContent = credit > 0n ? `Refund credit on coordinator: ${usdc(credit)}` : '';
+    $('#withdrawCreditBtn').style.display = credit > 0n ? '' : 'none';
+    if (!ids.length) {
+      body.replaceChildren(el('tr', {}, el('td', { colSpan: 5, className: 'muted', textContent: 'No requests from this account yet.' })));
+      return;
+    }
+    const rows = await Promise.all([...ids].reverse().slice(0, 30).map(async (idBig) => {
+      const requestId = idBig.toString();
+      const result = plainResult(await consumerRead.getResult(requestId));
+      let statusNode;
+      let resultText = '';
+      let action = '';
+      if (result.status === 2) {
+        statusNode = el('span', { className: 'ok', textContent: 'Fulfilled' });
+        resultText = summarize(result, await itemsFor(result));
+      } else if (result.status === 3) {
+        statusNode = el('span', { className: 'warn', textContent: 'Refunded' });
+      } else {
+        const request = await coordinatorRead.getRequest(requestId);
+        if (request.fulfilled && !request.delivered) {
+          statusNode = el('span', { className: 'warn', textContent: 'Fulfilled, callback failed' });
+          action = el('button', { className: 'secondary', textContent: 'Retry callback' });
+          action.onclick = () => retryCallback(requestId, action);
+        } else if (!request.fulfilled && !request.refunded && latestBlock.timestamp > Number(request.deadline)) {
+          statusNode = el('span', { className: 'warn', textContent: 'Expired' });
+          action = el('button', { className: 'secondary', textContent: 'Refund fee' });
+          action.onclick = () => refundRequest(requestId, action);
+        } else {
+          statusNode = el('span', { textContent: request.fulfilled ? 'Fulfilled (delivering)' : `${JOB_STATUS[result.status]}, deadline in ${Math.max(0, Number(request.deadline) - latestBlock.timestamp)} s` });
+        }
+      }
+      return el('tr', {},
+        el('td', {}, `#${requestId} `, replayLink(requestId)),
+        el('td', { textContent: KIND_LABELS[result.kind] }),
+        el('td', {}, statusNode),
+        el('td', { className: 'mono', textContent: resultText }),
+        el('td', {}, action));
+    }));
+    body.replaceChildren(...rows);
+  } catch (error) {
+    body.replaceChildren(el('tr', {}, el('td', { colSpan: 5, className: 'bad', textContent: explainError(error) })));
+  } finally {
+    historyBusy = false;
+  }
+}
+
+// ------------------------------------------------------------------ wallet, network, consumer
+const canSend = () => Boolean(account && consumerRead);
+function refreshButtons() {
+  for (const c of cards) c.button.disabled = !canSend();
+  $('#runAllBtn').disabled = !canSend();
+  $('#historyBtn').disabled = !canSend();
+}
+
+async function ensureChain() {
+  if (!window.ethereum) throw new Error('No browser wallet found.');
+  const current = await window.ethereum.request({ method: 'eth_chainId' });
+  if (parseInt(current, 16) !== NET.chainId) {
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_HEX }] });
+    } catch (error) {
+      if (error?.code !== 4902 && error?.data?.originalError?.code !== 4902) throw error;
+      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
+        chainId: CHAIN_HEX, chainName: NET.name, rpcUrls: [NET.rpcUrl], blockExplorerUrls: [NET.explorer], nativeCurrency: NET.nativeCurrency,
+      }] });
+    }
+  }
+  browserProvider = new BrowserProvider(window.ethereum);
+}
+
+async function updateWallet() {
+  if (!account) {
+    $('#walletInfo').textContent = 'Wallet not connected';
+    $('#connectBtn').textContent = 'Connect wallet';
+  } else {
+    const walletChain = parseInt(await window.ethereum.request({ method: 'eth_chainId' }), 16);
+    const matches = walletChain === NET.chainId;
+    const balance = await readProvider.getBalance(account);
+    $('#walletInfo').replaceChildren(el('span', { className: 'mono', textContent: short(account) }), ` ${Number(formatUnits(balance, 18)).toFixed(4)} USDC `,
+      el('span', { className: `pill ${matches ? 'ok' : 'warn'}`, textContent: matches ? 'wallet on this network' : `wallet on chain ${walletChain}` }));
+    $('#connectBtn').textContent = matches ? 'Connected' : `Switch wallet to ${NET.name}`;
+  }
+  refreshButtons();
+}
+
+$('#connectBtn').onclick = async () => {
+  try {
+    if (!window.ethereum) throw new Error('No browser wallet found. Install MetaMask, Rabby or another EIP-1193 wallet.');
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    account = getAddress(accounts[0]);
+    await ensureChain();
+    await updateWallet();
+    refreshLive(true);
+    refreshHistory();
+  } catch (error) {
+    $('#walletInfo').replaceChildren(el('span', { className: 'bad', textContent: explainError(error) }));
+  }
+};
+if (window.ethereum) {
+  window.ethereum.on?.('accountsChanged', (accounts) => { account = accounts[0] ? getAddress(accounts[0]) : null; updateWallet(); refreshLive(true); refreshHistory(); });
+  window.ethereum.on?.('chainChanged', () => { browserProvider = new BrowserProvider(window.ethereum); updateWallet(); });
+  window.ethereum.request({ method: 'eth_accounts' }).then(async (accounts) => {
+    if (accounts[0]) { account = getAddress(accounts[0]); browserProvider = new BrowserProvider(window.ethereum); await updateWallet(); refreshHistory(); }
+  }).catch(() => {});
+}
+
+async function setConsumer(address, source) {
+  consumerRead = null;
+  consumerAddress = null;
+  refreshButtons();
+  const info = $('#consumerInfo');
+  const showNoContract = (message, className) => {
+    info.replaceChildren(el('span', { textContent: 'Status' }), el('span', { className, textContent: message }));
+    for (const c of cards) c.latest.replaceChildren(el('h3', { textContent: 'Latest on-chain result' }), el('div', { className: 'muted', textContent: 'No usable contract on this network.' }));
+    $('#recentBody').replaceChildren(el('tr', {}, el('td', { colSpan: 5, className: 'muted', textContent: 'No usable contract on this network.' })));
+  };
+  if (!address) {
+    showNoContract(`No D20Playground recorded for ${NET.name} in ${deploymentsName}. Run npm run deploy:${NET.key}, or enter an address below.`, 'warn');
+    return;
+  }
+  try {
+    if (!isAddress(address)) throw new Error('Not an address.');
+    address = getAddress(address);
+    if ((await readProvider.getCode(address)) === '0x') throw new Error(`No contract at ${address} on ${NET.name}.`);
+    const candidate = new Contract(address, fullInterface, readProvider);
+    const [rng, gas] = await Promise.all([candidate.rng(), candidate.CALLBACK_GAS()]);
+    if (getAddress(rng) !== getAddress(COORDINATOR)) throw new Error(`This contract uses coordinator ${rng}, not the published ${NET.name} coordinator ${COORDINATOR}.`);
+    consumerAddress = address;
+    consumerRead = candidate;
+    callbackGas = BigInt(gas);
+    consumerSource = source;
+    shownLatest.fill(null);
+    shownRecentTop = null;
+    lastFulfilledCount = null;
+    lastRequestCount = null;
+    $('#consumerInput').value = address;
+    setLiveInfo(null, null, null);
+    await refreshLive(true);
+  } catch (error) {
+    showNoContract(explainError(error), 'bad');
+  }
+  refreshButtons();
+  refreshHistory();
+}
+$('#consumerBtn').onclick = () => setConsumer($('#consumerInput').value.trim(), 'entered for this session');
+$('#historyBtn').onclick = () => refreshHistory();
+$('#withdrawCreditBtn').onclick = async () => {
+  try {
+    await ensureChain();
+    const coordinator = new Contract(COORDINATOR, coordinatorAbi, await browserProvider.getSigner());
+    await (await coordinator.withdrawRefundCredit(account)).wait();
+  } catch (error) { alert(explainError(error)); }
+  refreshHistory();
+  updateWallet();
+};
+$('#runAllBtn').onclick = async () => {
+  if (NET.isMainnet && !confirm(`${NET.name}: send ${cards.length} requests, each spending real USDC (currently about the minimum fee plus gas; change is returned)?`)) return;
+  $('#runAllBtn').disabled = true;
+  for (const [i, c] of cards.entries()) {
+    $('#runAllStatus').textContent = `Submitting ${i + 1}/${cards.length}: ${c.option.title}`;
+    await c.run({ skipConfirm: true }); // resolves once the request is mined; results keep arriving
+  }
+  $('#runAllStatus').textContent = 'All requests submitted.';
+  refreshButtons();
+};
+
+// Network selector: reload the page for the chosen network (network-specific URL overrides are dropped).
+const select = $('#networkSelect');
+for (const n of Object.values(NETWORKS)) select.append(el('option', { value: n.key, textContent: `${n.name} (${n.chainId})`, selected: n.chainId === NET.chainId }));
+select.onchange = () => {
+  try { localStorage.setItem('d20pg:network', select.value); } catch { /* storage unavailable */ }
+  const next = new URLSearchParams(location.search);
+  next.set('network', select.value);
+  next.delete('rpc');
+  next.delete('consumer');
+  location.search = next.toString();
+};
+$('#networkPill').replaceChildren(NET.isMainnet ? el('span', { className: 'pill mainnet', textContent: 'MAINNET: real USDC' }) : el('span', { className: 'pill', textContent: 'testnet' }));
+$('#footer').replaceChildren(
+  'Requests pay the D20DAO fee in USDC (quoted with ', el('code', { textContent: 'quoteRequestFee' }), ', 30% base-fee buffer; the contract pays the exact in-transaction ',
+  el('code', { textContent: 'quoteFee' }), ' and returns the change). Results arrive through the keeper; unfulfilled requests can be refunded after their 60-second deadline. ',
+  NET.faucet ? el('span', {}, 'Test USDC: ', link(NET.faucet, NET.faucet)) : el('span', { className: 'warn', textContent: 'This is mainnet: every request spends real USDC.' }),
+  el('div', { style: 'margin-top:8px' }, link('https://github.com/d20dao/randomizer-demo', 'Source'), ' · ', link('https://github.com/d20dao/d20-sdk', 'SDK'), ' · ',
+    link('https://d20dao.org/docs', 'Docs'), ' · ', link(NET.isMainnet ? 'https://arc.d20dao.org' : 'https://arc-testnet.d20dao.org', 'D20DAO Explorer')));
+
+async function loadService() {
+  const info = $('#serviceInfo');
+  try {
+    const [slot, pricing, quote, nextId] = await Promise.all([
+      readProvider.getStorage(COORDINATOR, '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'),
+      coordinatorRead.pricing(),
+      quoteRequestFee(readProvider, COORDINATOR, callbackGas, { bufferBps: BUFFER_BPS }),
+      coordinatorRead.nextRequestId(),
+    ]);
+    const implementation = getAddress('0x' + slot.slice(26));
+    const pinned = implementation === getAddress(NET.coordinatorImplementation);
+    info.replaceChildren(
+      el('span', { textContent: 'Network' }), el('span', { textContent: `${NET.name}, chain ${NET.chainId}${RPC_URL !== NET.rpcUrl ? ` via ${RPC_URL}` : ''}` }),
+      el('span', { textContent: 'Coordinator' }), el('span', {}, link(`${NET.explorer}/address/${COORDINATOR}`, COORDINATOR)),
+      el('span', { textContent: 'Implementation' }), el('span', { className: pinned ? 'ok mono' : 'warn mono', textContent: `${short(implementation)} ${pinned ? '(matches manifest)' : '(CHANGED since manifest snapshot)'}` }),
+      el('span', { textContent: 'Pricing' }), el('span', { textContent: `minFee ${usdc(pricing[0])}, multiplier ${pricing[1]}, overhead ${pricing[2]} gas` }),
+      el('span', { textContent: 'Current quote' }), el('span', { textContent: `${usdc(quote.fee)} at ${formatUnits(quote.baseFee, 'gwei')} gwei for ${callbackGas} callback gas` }),
+      el('span', { textContent: 'Service requests' }), el('span', { textContent: String(nextId - 1n) }),
+      el('span', { textContent: 'Manifest' }), el('span', {}, link(NET.manifestUrl, NET.manifestUrl)),
+    );
+  } catch (error) {
+    info.replaceChildren(el('span', { textContent: 'Error' }), el('span', { className: 'bad', textContent: explainError(error) }));
+  }
+}
+
+// ------------------------------------------------------------------ boot
+const initialConsumer = params.get('consumer') || DEPLOYMENTS[NET.chainId]?.address || null;
+await setConsumer(initialConsumer, params.get('consumer') ? '?consumer= URL parameter' : `${deploymentsName} (written by npm run deploy:${NET.key})`);
+loadService();
+setInterval(loadService, 30000);
+setInterval(() => refreshLive(false), LIVE_MS);
+</script>
+</body>
+</html>

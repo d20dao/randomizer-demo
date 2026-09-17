@@ -1,0 +1,10 @@
+{
+  // Static hosting of frontend/ on a free-tier Cloudflare Worker. Run `npm run deploy:worker`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "d20dao-randomizer-demo",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./frontend", "not_found_handling": "404-page" },
+  "routes": [{ "pattern": "mainnet-demo.d20dao.org", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}

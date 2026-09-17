@@ -1,0 +1,16 @@
+{
+  "5042": {
+    "network": "mainnet",
+    "name": "Arc Mainnet",
+    "chainId": 5042,
+    "address": "0x706a87Ec309BAb30Cb5D0586B35Ee31570D7bD46",
+    "coordinator": "0xd20da057469C45928912d983F45790C41e290571",
+    "callbackGas": 150000,
+    "deployer": "0x7ad78fc8097DFEA5c12DBb503D6EB6E60f34B40B",
+    "transactionHash": "0x3dc65bda2743040a1375577ba8744c2f62f1cb8f5c81b32448c33294a019632b",
+    "blockNumber": 21251300,
+    "compiler": "0.8.28+commit.7893614a.Emscripten.clang",
+    "rpcUsed": "https://rpc.mainnet.arc.io",
+    "deployedAt": "2026-09-17T01:42:37.395Z"
+  }
+}

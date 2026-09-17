@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+.wrangler/
+# Build outputs (npm run build)
+artifacts/
+frontend/vendor/
+frontend/networks.json
+frontend/D20Playground.abi.json
+# Local test outputs
+frontend/deployments.local-test.json
+test/.hardhat/
