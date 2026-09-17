@@ -7,7 +7,7 @@ A small dapp that requests every randomness option in [`@d20dao/vrf-sdk`](https:
 | Network | D20Playground contract | D20DAO coordinator proxy |
 | --- | --- | --- |
 | Arc Mainnet (5042) | [`0x706a87Ec309BAb30Cb5D0586B35Ee31570D7bD46`](https://explorer.arc.io/address/0x706a87Ec309BAb30Cb5D0586B35Ee31570D7bD46) | [`0xd20da057469C45928912d983F45790C41e290571`](https://explorer.arc.io/address/0xd20da057469C45928912d983F45790C41e290571) |
-| Arc Testnet (5042002) | not deployed; run `npm run deploy:testnet` | [`0xd20DA0FF9087d053f0291524Eac12abA1ADBd945`](https://testnet.arcscan.app/address/0xd20DA0FF9087d053f0291524Eac12abA1ADBd945) |
+| Arc Testnet (5042002) | [`0x27a7B3faE019728330AF0A68f965706c644766F7`](https://testnet.arcscan.app/address/0x27a7B3faE019728330AF0A68f965706c644766F7) | [`0xd20DA0FF9087d053f0291524Eac12abA1ADBd945`](https://testnet.arcscan.app/address/0xd20DA0FF9087d053f0291524Eac12abA1ADBd945) |
 
 Requests on mainnet spend real USDC: the D20DAO fee (0.08 USDC minimum) plus gas. Check requests on the [D20DAO Explorer](https://arc.d20dao.org).
 
@@ -19,7 +19,7 @@ This is example code, not audited, and has no application payments, eligibility 
 - `frontend/deployments.json`: the contract address for each chain id, written by the deploy script.
 - `scripts/`: compile, pre-flight check, keyless live dry run, deploy and serve.
 - `test/`: a local end-to-end test with a mock coordinator.
-- `wrangler.jsonc`: static hosting of `frontend/` on a Cloudflare Worker.
+- `wrangler.jsonc` and `worker/index.js`: static hosting of `frontend/` on a Cloudflare Worker, plus a read-only RPC relay.
 
 ## Options covered
 
@@ -101,7 +101,7 @@ With bash, use `PRIVATE_KEY=0x... npm run deploy:mainnet -- --confirm-mainnet`. 
 
 ## Host the page
 
-`npm run deploy:worker` builds the project and uploads `frontend/` as static assets to a Cloudflare Worker (free plan). `wrangler.jsonc` binds it to `mainnet-demo.d20dao.org`; change `name` and `routes` for your own domain, and run `npx wrangler login` first. If your login has more than one Cloudflare account, set `CLOUDFLARE_ACCOUNT_ID`. On a host name starting with `mainnet`, the page opens on Arc Mainnet.
+`npm run deploy:worker` builds the project and uploads `frontend/` as static assets to a Cloudflare Worker (free plan). Arc's public RPC endpoints are on `*.arc.io`, which common ad-block lists block in browsers (`net::ERR_BLOCKED_BY_CLIENT`). The page therefore checks the public RPC first and otherwise reads through `/rpc/<chainId>`, a relay in `worker/index.js` that forwards only read methods; wallets still send transactions through their own RPC. Static files never invoke the Worker, and relayed pages poll every 8 seconds and pause in background tabs. `npm run serve` provides the same relay locally. `wrangler.jsonc` binds it to `mainnet-demo.d20dao.org`; change `name` and `routes` for your own domain, and run `npx wrangler login` first. If your login has more than one Cloudflare account, set `CLOUDFLARE_ACCOUNT_ID`. On a host name starting with `mainnet`, the page opens on Arc Mainnet.
 
 ## Open the page locally
 

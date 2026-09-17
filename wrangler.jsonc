@@ -1,9 +1,12 @@
 {
-  // Static hosting of frontend/ on a free-tier Cloudflare Worker. Run `npm run deploy:worker`.
+  // Static hosting of frontend/ plus a read-only RPC relay (worker/index.js) on a free-tier Cloudflare Worker.
+  // Run `npm run deploy:worker`.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "d20dao-randomizer-demo",
   "compatibility_date": "2026-09-01",
-  "assets": { "directory": "./frontend", "not_found_handling": "404-page" },
+  "main": "worker/index.js",
+  // Static files never invoke the Worker; only the read-only RPC relay does.
+  "assets": { "directory": "./frontend", "binding": "ASSETS", "run_worker_first": ["/rpc/*"] },
   "routes": [{ "pattern": "mainnet-demo.d20dao.org", "custom_domain": true }],
   "workers_dev": false,
   "preview_urls": false

@@ -175,7 +175,7 @@ const LIST_KINDS = new Set([11, 12, 13]);
 const JOB_STATUS = ['Unknown', 'Pending', 'Fulfilled', 'Refunded'];
 const BUFFER_BPS = 3000;
 const TRACK_MS = 2000;
-const LIVE_MS = Math.max(1000, Number(params.get('poll')) || 4000);
+let LIVE_MS = Math.max(1000, Number(params.get('poll')) || 4000);
 
 // ------------------------------------------------------------------ configuration (networks.json from `npm run build`, deployments from `npm run deploy:*`)
 const deploymentsName = /^[\w.-]+\.json$/.test(params.get('deployments') || '') ? params.get('deployments') : 'deployments.json';
@@ -189,7 +189,18 @@ try { storedNetwork = localStorage.getItem('d20pg:network'); } catch { /* storag
 // mainnet-demo.* opens on mainnet; elsewhere the first network with a recorded deployment, testnet first.
 const DEFAULT_NETWORK = location.hostname.startsWith('mainnet') || !DEPLOYMENTS[5042002] ? 'mainnet' : 'testnet';
 const NET = findNetwork(params.get('network')) || findNetwork(storedNetwork) || findNetwork(DEFAULT_NETWORK);
-const RPC_URL = params.get('rpc') || NET.rpcUrl;
+// Arc's public RPCs are on *.arc.io, which browser ad blockers often block. Use them when reachable, otherwise the
+// same-origin read-only relay (worker/index.js, or scripts/serve.mjs locally) at /rpc/<chainId>.
+async function reachable(url) {
+  try {
+    const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }) });
+    return Number((await response.json()).result) === NET.chainId;
+  } catch { return false; }
+}
+const RELAY_URL = new URL(`./rpc/${NET.chainId}`, location.href).href;
+const RPC_URL = params.get('rpc') || ((await reachable(NET.rpcUrl)) ? NET.rpcUrl : RELAY_URL);
+// Relayed reads go through the page host's Worker quota: poll more gently.
+if (RPC_URL === RELAY_URL && !params.get('poll')) LIVE_MS = 8000;
 const COORDINATOR = NET.coordinator;
 const CHAIN_HEX = '0x' + NET.chainId.toString(16);
 const replayLink = (requestId) => link(`https://d20dao.org/explorer/request/${NET.chainId}/${COORDINATOR}/${requestId}`, 'D20DAO explorer');
@@ -768,7 +779,7 @@ async function loadService() {
     const implementation = getAddress('0x' + slot.slice(26));
     const pinned = implementation === getAddress(NET.coordinatorImplementation);
     info.replaceChildren(
-      el('span', { textContent: 'Network' }), el('span', { textContent: `${NET.name}, chain ${NET.chainId}${RPC_URL !== NET.rpcUrl ? ` via ${RPC_URL}` : ''}` }),
+      el('span', { textContent: 'Network' }), el('span', { textContent: `${NET.name}, chain ${NET.chainId}${RPC_URL === RELAY_URL ? ' via the site RPC relay (public RPC blocked in this browser)' : RPC_URL !== NET.rpcUrl ? ` via ${RPC_URL}` : ''}` }),
       el('span', { textContent: 'Coordinator' }), el('span', {}, link(`${NET.explorer}/address/${COORDINATOR}`, COORDINATOR)),
       el('span', { textContent: 'Implementation' }), el('span', { className: pinned ? 'ok mono' : 'warn mono', textContent: `${short(implementation)} ${pinned ? '(matches manifest)' : '(CHANGED since manifest snapshot)'}` }),
       el('span', { textContent: 'Pricing' }), el('span', { textContent: `minFee ${usdc(pricing[0])}, multiplier ${pricing[1]}, overhead ${pricing[2]} gas` }),
@@ -786,7 +797,7 @@ const initialConsumer = params.get('consumer') || DEPLOYMENTS[NET.chainId]?.addr
 await setConsumer(initialConsumer, params.get('consumer') ? '?consumer= URL parameter' : `${deploymentsName} (written by npm run deploy:${NET.key})`);
 loadService();
 setInterval(loadService, 30000);
-setInterval(() => refreshLive(false), LIVE_MS);
+setInterval(() => { if (!document.hidden) refreshLive(false); }, LIVE_MS);
 </script>
 </body>
 </html>

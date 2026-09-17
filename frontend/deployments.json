@@ -12,5 +12,19 @@
     "compiler": "0.8.28+commit.7893614a.Emscripten.clang",
     "rpcUsed": "https://rpc.mainnet.arc.io",
     "deployedAt": "2026-09-17T01:42:37.395Z"
+  },
+  "5042002": {
+    "network": "testnet",
+    "name": "Arc Testnet",
+    "chainId": 5042002,
+    "address": "0x27a7B3faE019728330AF0A68f965706c644766F7",
+    "coordinator": "0xd20DA0FF9087d053f0291524Eac12abA1ADBd945",
+    "callbackGas": 150000,
+    "deployer": "0x7ad78fc8097DFEA5c12DBb503D6EB6E60f34B40B",
+    "transactionHash": "0xa93ec5f2b2c847e8a9b7e2257d022044dc591c98c4cae1f4a89b00955900fc1b",
+    "blockNumber": 62499513,
+    "compiler": "0.8.28+commit.7893614a.Emscripten.clang",
+    "rpcUsed": "https://rpc.testnet.arc.io",
+    "deployedAt": "2026-09-17T02:02:11.694Z"
   }
 }
