@@ -101,7 +101,7 @@ With bash, use `PRIVATE_KEY=0x... npm run deploy:mainnet -- --confirm-mainnet`. 
 
 ## Host the page
 
-`npm run deploy:worker` builds the project and uploads `frontend/` as static assets to a Cloudflare Worker (free plan). `wrangler.jsonc` binds it to `mainnet-demo.d20dao.org`; change `name` and `routes` for your own domain, and run `npx wrangler login` first. On a host name starting with `mainnet`, the page opens on Arc Mainnet.
+`npm run deploy:worker` builds the project and uploads `frontend/` as static assets to a Cloudflare Worker (free plan). `wrangler.jsonc` binds it to `mainnet-demo.d20dao.org`; change `name` and `routes` for your own domain, and run `npx wrangler login` first. If your login has more than one Cloudflare account, set `CLOUDFLARE_ACCOUNT_ID`. On a host name starting with `mainnet`, the page opens on Arc Mainnet.
 
 ## Open the page locally
 
