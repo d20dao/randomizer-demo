@@ -738,7 +738,7 @@ $('#withdrawCreditBtn').onclick = async () => {
   updateWallet();
 };
 $('#runAllBtn').onclick = async () => {
-  if (NET.isMainnet && !confirm(`${NET.name}: send ${cards.length} requests, each spending real USDC (currently about the minimum fee plus gas; change is returned)?`)) return;
+  if (NET.isMainnet && !confirm(`${NET.name}: send ${cards.length} requests, each spending real USDC (the quoted fee plus gas; change is returned)?`)) return;
   $('#runAllBtn').disabled = true;
   for (const [i, c] of cards.entries()) {
     $('#runAllStatus').textContent = `Submitting ${i + 1}/${cards.length}: ${c.option.title}`;
