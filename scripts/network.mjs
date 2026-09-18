@@ -1,8 +1,9 @@
 // Arc networks and the published D20DAO deployment for each one.
-// D20DAO values are copied from the public manifests (checked 2026-09-17):
+// D20DAO values are copied from the public manifests (checked 2026-09-18, after the implementation upgrades of
+// 2026-09-17 that @d20dao/vrf-sdk 0.4.0 describes):
 //   https://d20dao.org/deployments/arc-testnet.json  (createdAt 2026-09-16T19:05:46Z)
 //   https://d20dao.org/deployments/arc-mainnet.json  (createdAt 2026-09-17T00:19:45Z)
-// which match the @d20dao/vrf-sdk README "Deployments" tables. scripts/check-service.mjs re-fetches the manifests
+// which match the @d20dao/vrf-sdk 0.4.0 README "Deployments" tables. scripts/check-service.mjs re-fetches the manifests
 // and reads the chain, so a later upgrade is reported instead of silently trusted.
 // RPC endpoints and explorers are listed in the SDK README "Networks" section and in Arc's docs
 // (https://docs.arc.io/arc/references/connect-to-arc).
@@ -10,11 +11,11 @@
 export const ERC1967_IMPLEMENTATION_SLOT = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 
 const SHARED_IMPLEMENTATIONS = {
-  // "Mainnet and testnet run the same implementation code." (SDK README); both manifests agree.
-  coordinatorImplementation: '0xD20da0c375cEfCdA65703699A4090237057e9b68',
-  coordinatorImplementationCodeHash: '0x39360c272bc4806b66b6f3928f6f5f2bff240d186aba0e09cbbdc574c3c1622f',
-  epochImplementation: '0xD20Da0cf7Ddc6123f9A87c0C210F8ECB934CA7D5',
-  epochImplementationCodeHash: '0xeb8c6ff3a703f40153d67729112228e6a02bd9745680ca8afeedf99bd1a40a09',
+  // "Both networks run the same coordinator and registry implementations." (SDK README); both manifests agree.
+  coordinatorImplementation: '0xd20da0DADa4352A1a9722be43a2D85923443458c',
+  coordinatorImplementationCodeHash: '0x8c592609fcb15bc512a91a5cdf6b1ddbe994f3a8b30793fc3967a19b69c1cd0d',
+  epochImplementation: '0xd20dA048C969e5aDcC703Dfdf8220cc9dCB2f865',
+  epochImplementationCodeHash: '0xd41d69a60a991c0384e5ecb959422a5e8964dbfce80b6aeddc95a975b392430f',
 };
 
 export const NETWORKS = {

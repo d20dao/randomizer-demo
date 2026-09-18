@@ -21,7 +21,7 @@
     "deploy:worker": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "@d20dao/vrf-sdk": "0.3.3"
+    "@d20dao/vrf-sdk": "0.4.0"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

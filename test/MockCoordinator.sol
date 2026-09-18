@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {RandomnessMapping} from "@d20dao/vrf-sdk/contracts/libraries/RandomnessMapping.sol";
 import {ID20VRFConsumer, ID20VRFRefundConsumer} from "@d20dao/vrf-sdk/contracts/interfaces/ID20VRF.sol";
 
-/// @notice LOCAL TEST ONLY. Mirrors the parts of D20VRFCoordinator (protocol commit 640b60c) that D20Playground and the
+/// @notice LOCAL TEST ONLY. Mirrors the parts of D20VRFCoordinator (protocol commit de5f82e) that D20Playground and the
 ///         page touch: same request checks, fee formula, 60 s deadline, exact callback gas with the same reserve check,
 ///         refund push + onRefund hook, retryCallback, refund credit, and the same public read functions and errors.
 ///         No VRF proof or epochs: a test "keeper" calls fulfill(id, word).
