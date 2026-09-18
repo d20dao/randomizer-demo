@@ -9,7 +9,7 @@ A small dapp that requests every randomness option in [`@d20dao/vrf-sdk`](https:
 | Arc Mainnet (5042) | [`0x706a87Ec309BAb30Cb5D0586B35Ee31570D7bD46`](https://explorer.arc.io/address/0x706a87Ec309BAb30Cb5D0586B35Ee31570D7bD46) | [`0xd20da057469C45928912d983F45790C41e290571`](https://explorer.arc.io/address/0xd20da057469C45928912d983F45790C41e290571) |
 | Arc Testnet (5042002) | [`0x27a7B3faE019728330AF0A68f965706c644766F7`](https://testnet.arcscan.app/address/0x27a7B3faE019728330AF0A68f965706c644766F7) | [`0xd20DA0FF9087d053f0291524Eac12abA1ADBd945`](https://testnet.arcscan.app/address/0xd20DA0FF9087d053f0291524Eac12abA1ADBd945) |
 
-Requests on mainnet spend real USDC: the D20DAO fee (0.08 USDC minimum) plus gas. Check requests on the [D20DAO Explorer](https://arc.d20dao.org).
+Requests on mainnet spend real USDC: the D20DAO fee (0.02 USDC minimum) plus gas. Check requests on the [D20DAO Explorer](https://arc.d20dao.org).
 
 This is example code, not audited, and has no application payments, eligibility rules or access control beyond the randomness fee.
 
@@ -57,7 +57,7 @@ Measured callback gas is about 103k in the worst case, the first result ever whe
 
 The page quotes the fee with the SDK's `quoteRequestFee(provider, coordinator, CALLBACK_GAS, { bufferBps: 3000 })` and sends the result as `msg.value`. The contract pays the exact in-transaction `quoteFee(CALLBACK_GAS)` through the `D20VRFRequests` helper and returns the change. The requester is the fixed refund address.
 
-At a 20 gwei base fee, both networks currently charge the 0.08 USDC minimum per request. Each request also pays its own gas. Deployment uses about 2.34M gas.
+At a 20 gwei base fee and 150,000 callback gas, Arc Mainnet charges 0.027 USDC per request. Arc Testnet charges its 0.08 USDC minimum. Each request also pays its own gas. Deployment uses about 2.34M gas.
 
 ## Setup
 
